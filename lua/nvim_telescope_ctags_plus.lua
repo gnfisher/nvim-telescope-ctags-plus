@@ -16,6 +16,7 @@ local ctags_plus = {}
 
 ctags_plus.jump_to_tag = function(opts)
   opts = opts or {}
+  opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   -- Get the word under the cursor presently
   local word = vim.fn.expand "<cword>"
   -- Get tag file
