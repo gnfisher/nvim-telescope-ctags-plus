@@ -14,11 +14,31 @@ local flatten = vim.tbl_flatten
 
 local ctags_plus = {}
 
+local function buf_vtext()
+  local a_orig = vim.fn.getreg('a')
+  local mode = vim.fn.mode()
+  if mode ~= 'v' and mode ~= 'V' then
+    vim.cmd([[normal! gv]])
+  end
+  vim.cmd([[silent! normal! "aygv]])
+  local text = vim.fn.getreg('a')
+  vim.fn.setreg('a', a_orig)
+  return text
+end
+
+local function visual_or_cword()
+  local mode = vim.fn.mode()
+  if mode == 'v' or mode == 'V' then
+    return buf_vtext()
+  end
+  return vim.fn.expand('<cword>')
+end
+
 ctags_plus.jump_to_tag = function(opts)
   opts = opts or {}
   opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   -- Get the word under the cursor presently
-  local word = vim.fn.expand "<cword>"
+  local word = visual_or_cword()
   -- Get tag file
   local tagfiles = opts.ctags_file and { opts.ctags_file } or vim.fn.tagfiles()
   for i, ctags_file in ipairs(tagfiles) do
@@ -36,7 +56,7 @@ ctags_plus.jump_to_tag = function(opts)
   opts.entry_maker = vim.F.if_nil(opts.entry_maker, make_entry.gen_from_ctags(opts))
 
   pickers.new(opts, {
-    prompt_title = "Matching Tags",
+    prompt_title = "Tags for: " .. word,
     finder = finders.new_oneshot_job(flatten { "readtags", "-e", "-t", tagfiles, "-", word }, opts),
     previewer = previewers.ctags.new(opts),
     sorter = conf.generic_sorter(opts),
