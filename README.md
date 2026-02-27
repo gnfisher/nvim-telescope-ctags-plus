@@ -1,38 +1,79 @@
 # nvim-telescope-ctags-plus
 
-The goal of this telescope extension is to make browsing ctags in a large
-project more pleasant. Currently it only adds a simple `jump_to_tag` option,
-which will give you a telescope picker of all matching ctag entries with
-preview. 
+Telescope extension for faster ctags jumps in large codebases.
+
+## Features
+
+- `jump_to_tag()` for `g]`-style jumps with Telescope picker + preview
+- single-match fast path (`jump_if_single = true` by default)
+- visual selection support (useful for Ruby symbols like `:foo`)
+- readtags-first query with fallback to `vim.fn.taglist()`
+- better default path/text visibility (`fname_width = 60`, `show_line = true`)
 
 ## Installation
 
+### lazy.nvim
+
+```lua
+{
+  "gnfisher/nvim-telescope-ctags-plus",
+  dependencies = { "nvim-telescope/telescope.nvim" },
+  config = function()
+    require("telescope").setup({
+      extensions = {
+        ctags_plus = {
+          -- optional overrides (these are the defaults):
+          -- readtags_cmd = "readtags",
+          -- use_readtags = true,
+          -- match = "exact", -- "exact" | "prefix" | "icase" | "prefix_icase"
+          -- jump_if_single = true,
+          -- word_source = "visual_or_cword", -- "cword" | "visual" | "visual_or_cword"
+          -- fname_width = 60,
+          -- show_line = true,
+        },
+      },
+    })
+    require("telescope").load_extension("ctags_plus")
+  end,
+}
+```
+
 ### vim-plug
 
-```
+```vim
 Plug 'gnfisher/nvim-telescope-ctags-plus'
 ```
 
-### Telescope setup
-
-You'll need to load the extension.
-
-```
-require('telescope').load_extension('ctags_plus')
+```lua
+require("telescope").load_extension("ctags_plus")
 ```
 
-And then map it to something. I replace `g]` as so:
+## Usage
 
-```
+```vim
 nnoremap g] <cmd>lua require('telescope').extensions.ctags_plus.jump_to_tag()<cr>
+xnoremap g] <cmd>lua require('telescope').extensions.ctags_plus.jump_to_tag({ word_source = 'visual' })<cr>
+nnoremap <leader>ft <cmd>lua require('telescope').extensions.ctags_plus.select_tag()<cr>
 ```
 
-## The future
+## About long path/line text in Telescope rows
 
-I would like to add more functionality to this in the future, including:
+Telescope rows are clipped to the picker width. To show more context:
 
-- [ ] Automatically jump to the tag if there is only one possible match
-- [ ] Possibly handle no matches better than an empty picker (do nothing, show
-  message in the neovim footer?)
-- [ ] Make the picker window look nicer (we borrow from the
-  `make_entry.gen_from_ctags` function in telescope currently).
+- increase `fname_width` (for path visibility)
+- keep `show_line = true` (shows more of tag definition text)
+- use a wider Telescope layout for this picker
+
+## Healthcheck
+
+```vim
+:checkhealth ctags_plus
+```
+
+## Development
+
+```bash
+make test
+make lint
+make check
+```
